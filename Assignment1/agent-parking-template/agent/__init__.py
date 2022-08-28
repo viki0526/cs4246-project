@@ -171,12 +171,34 @@ class GeneratePDDL_Stationary :
  
 
     def generateInitString(self) :
+
+        gridList = []
+        for gridcell in self.grid_cell_list:
+            gridList.append((int(gridcell[2]), int(gridcell[5])))
+
+        carList = []
+        for car in self.state.cars:
+            carList.append((car.position.x, car.position.y))
+
+        blockedCells = []
+        for gridcell in gridList:
+            if gridcell in carList:
+                blockedCells.append(gridcell)
+            
+        initString = ""
+        for cell in blockedCells:
+            initString += "(blocked pt{}pt{})".format(cell[0], cell[1])
+       
+        initString += "(at pt{}pt{} agent1)".format(self.state.agent.position.x, self.state.agent.position.y)
+
+        return initString    
+
         '''
         FILL ME : Should return the init string in the problem PDDL file. 
         Hint : Use the defined grid cell objects from genearateGridCells and predicates to construct the init string.
 
         Information that might be useful here :
-
+        
         1. Initial State of the environment : self.state
         2. Agent's x position : self.state.agent.position.x
         3. Agent's y position : self.state.agent.position.y
@@ -195,7 +217,6 @@ class GeneratePDDL_Stationary :
         return "(at apn1 apt2) (at tru1 pos1) (at obj11 pos1) (at obj12 pos1) (at obj13 pos1) (at tru2 pos2) (at obj21 pos2) (at obj22 pos2)
                 (at obj23 pos2) (in-city pos1 cit1) (in-city apt1 cit1) (in-city pos2 cit2) (in-city apt2 cit2)" 
         '''  
-        return ''
 
 
     def generateGoalString(self) :
@@ -213,7 +234,7 @@ class GeneratePDDL_Stationary :
 
         return "(and (at obj11 apt1) (at obj23 pos1) (at obj13 apt1) (at obj21 pos1)))"
         '''    
-        return ''
+        return 'at (pt{}pt{} agent1)'.format(self.state.finish_position.x, self.state.finish_position.y)
 
 
     def generateProblemPDDL(self) :
@@ -265,8 +286,23 @@ def generateDomainPDDLFile(gen):
     gen.addPredicate(name="forward_next", parameters=(("pt1" , "gridcell"), ("pt2", "gridcell")))
     gen.addPredicate(name="blocked", parameters=[("pt1" , "gridcell")] , isLastPredicate=True)
 
+    gen.addAction(name="UP", 
+                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?car ?pt1) (up_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
+    gen.addAction(name="DOWN", 
+                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?car ?pt1) (down_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
+    gen.addAction(name="FORWARD", 
+                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?car ?pt1) (forward_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
 
-
+    print("hello")
+    gen.generateDomainPDDL()
+    print("wassup")
+    pass
     '''
     FILL ME : Add the actions UP, DOWN, FORWARD with the help of gen.addAction() as follows :
 
@@ -284,7 +320,6 @@ def generateDomainPDDLFile(gen):
                   precondition_string="(and (at ?truck ?loc) (at ?pkg ?loc))", 
                   effect_string= "(and (not (at ?pkg ?loc)) (in ?pkg ?truck))")
     '''
-    pass
 
 def generateProblemPDDLFile(gen):
     '''
