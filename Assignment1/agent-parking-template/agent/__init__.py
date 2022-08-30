@@ -299,9 +299,7 @@ def generateDomainPDDLFile(gen):
                   precondition_string = "(and (at ?car ?pt1) (forward_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
                   effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
 
-    print("hello")
     gen.generateDomainPDDL()
-    print("wassup")
     pass
     '''
     FILL ME : Add the actions UP, DOWN, FORWARD with the help of gen.addAction() as follows :
@@ -371,6 +369,7 @@ def generatePlan(env):
     '''
     Extracts the plan given by the solver into a list of actions
     '''
+    print("sup")
     plan_file = open('sas_plan', 'r')
     action_sequence = []
     for line in plan_file.readlines() :
