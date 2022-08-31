@@ -174,7 +174,15 @@ class GeneratePDDL_Stationary :
 
         gridList = []
         for gridcell in self.grid_cell_list:
-            gridList.append((int(gridcell[2]), int(gridcell[5])))
+            gridcell = gridcell[2:]
+            c = 0
+            while c < len(gridcell):
+                if not gridcell[c].isdigit():
+                    break
+                c += 1
+            x = int(gridcell[:c])
+            y = int(gridcell[(c + 2):])
+            gridList.append((x, y))
 
         carList = []
         for car in self.state.cars:
@@ -188,7 +196,20 @@ class GeneratePDDL_Stationary :
         initString = ""
         for cell in blockedCells:
             initString += "(blocked pt{}pt{})".format(cell[0], cell[1])
-       
+        
+        for cell in gridList:
+            if cell[0] is not 0:
+                if cell[1] is 0:
+                    initString += "(up_next pt{}pt{} pt{}pt{})".format(cell[0], cell[1], cell[0] - 1, cell[1])
+                else:
+                    initString += "(up_next pt{}pt{} pt{}pt{})".format(cell[0], cell[1], cell[0] - 1, cell[1] - 1)
+                if cell[1] is (self.num_lanes - 1):
+                    initString += "(down_next pt{}pt{} pt{}pt{})".format(cell[0], cell[1], cell[0] - 1, cell[1])
+                else:
+                    initString += "(down_next pt{}pt{} pt{}pt{})".format(cell[0], cell[1], cell[0] - 1, cell[1] + 1)
+                
+                initString += "(forward_next pt{}pt{} pt{}pt{})".format(cell[0], cell[1], cell[0] - 1, cell[1])
+
         initString += "(at pt{}pt{} agent1)".format(self.state.agent.position.x, self.state.agent.position.y)
 
         return initString    
@@ -234,7 +255,7 @@ class GeneratePDDL_Stationary :
 
         return "(and (at obj11 apt1) (at obj23 pos1) (at obj13 apt1) (at obj21 pos1)))"
         '''    
-        return 'at (pt{}pt{} agent1)'.format(self.state.finish_position.x, self.state.finish_position.y)
+        return '(at pt{}pt{} agent1)'.format(self.state.finish_position.x, self.state.finish_position.y)
 
 
     def generateProblemPDDL(self) :
@@ -286,18 +307,30 @@ def generateDomainPDDLFile(gen):
     gen.addPredicate(name="forward_next", parameters=(("pt1" , "gridcell"), ("pt2", "gridcell")))
     gen.addPredicate(name="blocked", parameters=[("pt1" , "gridcell")] , isLastPredicate=True)
 
+    # gen.addAction(name="UP", 
+    #               parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+    #               precondition_string = "(and (at ?pt1 ?c) (up_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+    #               effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
+    # gen.addAction(name="DOWN", 
+    #               parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+    #               precondition_string = "(and (at ?pt1 ?c) (down_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+    #               effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
+    # gen.addAction(name="FORWARD", 
+    #               parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+    #               precondition_string = "(and (at ?pt1 ?c) (forward_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+    #               effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
     gen.addAction(name="UP", 
-                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
-                  precondition_string = "(and (at ?car ?pt1) (up_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
-                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
+                  parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?pt1 ?c) (up_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
     gen.addAction(name="DOWN", 
-                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
-                  precondition_string = "(and (at ?car ?pt1) (down_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
-                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
+                  parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?pt1 ?c) (down_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
     gen.addAction(name="FORWARD", 
-                  parameters = [("car", "car"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
-                  precondition_string = "(and (at ?car ?pt1) (forward_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
-                  effect_string="(and (not (at ?car ?pt1)) (at ?car ?pt2) (not (blocked ?pt1)) (blocked ?pt2))")
+                  parameters = [("c", "agent"), ("pt1", "gridcell"), ("pt2", "gridcell")], 
+                  precondition_string = "(and (at ?pt1 ?c) (forward_next ?pt1 ?pt2) (not (blocked ?pt2)))", 
+                  effect_string="(and (not (at ?pt1 ?c)) (at ?pt2 ?c) (not (blocked ?pt1)) (blocked ?pt2))")
 
     gen.generateDomainPDDL()
     pass
